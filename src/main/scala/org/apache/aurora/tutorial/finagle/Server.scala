@@ -1,6 +1,9 @@
 package org.apache.aurora.tutorial.finagle
 
+import java.net.InetAddress
 import java.nio.charset.StandardCharsets
+import java.text.SimpleDateFormat
+import java.util.Date
 
 import com.twitter.app.{App => TwitterApp}
 import com.twitter.finagle.{Http, Service}
@@ -10,12 +13,15 @@ import org.jboss.netty.handler.codec.http._
 
 object Server extends TwitterApp {
   val port = flag("http_port", "8080", "The port to listen on.")
+  val hostName = InetAddress.getLocalHost.getCanonicalHostName
 
   val service = new Service[HttpRequest, HttpResponse] {
     def apply(request: HttpRequest) = {
+      val now = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z").format(new Date())
       val response =
         new DefaultHttpResponse(request.getProtocolVersion, HttpResponseStatus.OK)
-      response.setContent(copiedBuffer("hello", StandardCharsets.UTF_8))
+      response.setContent(
+        copiedBuffer(s"{'host':'$hostName:${port()}', 'date': '$now'}", StandardCharsets.UTF_8))
       Future.value(response)
     }
   }
