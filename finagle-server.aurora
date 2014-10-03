@@ -1,0 +1,32 @@
+import getpass
+
+run_server = Process(
+  name = 'run_server',
+  cmdline = 'java -cp AuroraFinagleServer.jar org.apache.aurora.tutorial.finagle.Server -http_port={{thermos.ports[http]}}')
+
+stage_server = Process(
+  name = 'stage_server',
+  cmdline = "cp /vagrant/AuroraFinagleServer.jar ."
+)
+
+server_task = SequentialTask(
+  name = 'finagle-server',
+  resources = Resources(cpu=0.5, ram=32*MB, disk=64*MB),
+  processes = [stage_server, run_server])
+
+job = Service(
+  name = 'finagle-server',
+  cluster = 'devcluster',
+  instances = 2,
+  task = server_task,
+  role = getpass.getuser(),
+  environment = 'test',
+  contact = '{{role}}@localhost',
+  announce=Announcer(),
+  # Since there is only one slave in devcluster allow all instances to run there.
+  constraints = {
+    'host': 'limit:2',
+  },
+)
+
+jobs = [ job ]
