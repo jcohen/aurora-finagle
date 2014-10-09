@@ -16,12 +16,14 @@ object Server extends TwitterApp {
   val hostName = InetAddress.getLocalHost.getCanonicalHostName
 
   val service = new Service[HttpRequest, HttpResponse] {
+    val sdf = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z")
+
     def apply(request: HttpRequest) = {
-      val now = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z").format(new Date())
-      val response =
-        new DefaultHttpResponse(request.getProtocolVersion, HttpResponseStatus.OK)
+      val response = new DefaultHttpResponse(request.getProtocolVersion, HttpResponseStatus.OK)
       response.setContent(
-        copiedBuffer(s"{'host':'$hostName:${port()}', 'date': '$now'}", StandardCharsets.UTF_8))
+        copiedBuffer(
+          s"""{"date": "${sdf.format(new Date())}", "host":"$hostName:${port()}"}""",
+          StandardCharsets.UTF_8))
       Future.value(response)
     }
   }
